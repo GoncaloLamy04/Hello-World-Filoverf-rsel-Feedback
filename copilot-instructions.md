@@ -22,8 +22,8 @@ java FileClient
 
 To klasser som minimum, flere må gerne oprettes hvis det giver mening:
 
-- `FileServer.java`, lytter på port 5000
-- `FileClient.java`, forbinder og henter en fil
+- `src/FileServer.java`, lytter på port 5000
+- `src/FileClient.java`, forbinder og henter en fil
 
 Ingen multithreading, det er ikke et krav. Programmet skal kun håndtere én klient ad gangen.
 
