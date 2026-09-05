@@ -31,26 +31,36 @@ public class FileServer {
                         } else {
                             java.io.File baseDir = new java.io.File("files");
                             java.io.File target = new java.io.File(baseDir, filename);
-                            if (!target.exists() || !target.isFile()) {
-                                dos.writeUTF("ERROR|File not found");
-                                System.out.println("Sendte svar: ERROR|File not found (" + target.getPath() + ")");
-                            } else {
-                                long fileSize = target.length();
-                                dos.writeUTF("OK");
-                                dos.writeLong(fileSize);
-                                System.out.println("Sender fil (" + target.getPath() + ") størrelse " + fileSize + " bytes");
+                            try {
+                                String canonicalBaseDir = baseDir.getCanonicalPath();
+                                String canonicalTarget = target.getCanonicalPath();
+                                if (!canonicalTarget.startsWith(canonicalBaseDir + java.io.File.separator)) {
+                                    dos.writeUTF("ERROR|Ugyldigt filnavn");
+                                    System.out.println("Sendte svar: ERROR|Ugyldigt filnavn");
+                                } else if (!target.exists() || !target.isFile()) {
+                                    dos.writeUTF("ERROR|File not found");
+                                    System.out.println("Sendte svar: ERROR|File not found (" + target.getPath() + ")");
+                                } else {
+                                    long fileSize = target.length();
+                                    dos.writeUTF("OK");
+                                    dos.writeLong(fileSize);
+                                    System.out.println("Sender fil (" + target.getPath() + ") størrelse " + fileSize + " bytes");
 
-                                // Send filens bytes
-                                try (java.io.FileInputStream fis = new java.io.FileInputStream(target)) {
-                                    byte[] buffer = new byte[8192];
-                                    int read;
-                                    while ((read = fis.read(buffer)) != -1) {
-                                        dos.write(buffer, 0, read);
+                                    // Send filens bytes
+                                    try (java.io.FileInputStream fis = new java.io.FileInputStream(target)) {
+                                        byte[] buffer = new byte[8192];
+                                        int read;
+                                        while ((read = fis.read(buffer)) != -1) {
+                                            dos.write(buffer, 0, read);
+                                        }
+                                        dos.flush();
                                     }
-                                    dos.flush();
-                                }
 
-                                System.out.println("Færdig med at sende fil.");
+                                    System.out.println("Færdig med at sende fil.");
+                                }
+                            } catch (IOException e) {
+                                dos.writeUTF("ERROR|Ugyldigt filnavn");
+                                System.out.println("Sendte svar: ERROR|Ugyldigt filnavn");
                             }
                         }
                     } else {
