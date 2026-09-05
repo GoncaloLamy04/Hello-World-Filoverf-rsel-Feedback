@@ -25,28 +25,33 @@ public class FileServer {
                     // Enkel validering: skal starte med GET|
                     if (command != null && command.startsWith("GET|")) {
                         String filename = command.substring(4);
-                        java.io.File baseDir = new java.io.File("files");
-                        java.io.File target = new java.io.File(baseDir, filename);
-                        if (!target.exists() || !target.isFile()) {
-                            dos.writeUTF("ERROR|File not found");
-                            System.out.println("Sendte svar: ERROR|File not found (" + target.getPath() + ")");
+                        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+                            dos.writeUTF("ERROR|Ugyldigt filnavn");
+                            System.out.println("Sendte svar: ERROR|Ugyldigt filnavn");
                         } else {
-                            long fileSize = target.length();
-                            dos.writeUTF("OK");
-                            dos.writeLong(fileSize);
-                            System.out.println("Sender fil (" + target.getPath() + ") størrelse " + fileSize + " bytes");
+                            java.io.File baseDir = new java.io.File("files");
+                            java.io.File target = new java.io.File(baseDir, filename);
+                            if (!target.exists() || !target.isFile()) {
+                                dos.writeUTF("ERROR|File not found");
+                                System.out.println("Sendte svar: ERROR|File not found (" + target.getPath() + ")");
+                            } else {
+                                long fileSize = target.length();
+                                dos.writeUTF("OK");
+                                dos.writeLong(fileSize);
+                                System.out.println("Sender fil (" + target.getPath() + ") størrelse " + fileSize + " bytes");
 
-                            // Send filens bytes
-                            try (java.io.FileInputStream fis = new java.io.FileInputStream(target)) {
-                                byte[] buffer = new byte[8192];
-                                int read;
-                                while ((read = fis.read(buffer)) != -1) {
-                                    dos.write(buffer, 0, read);
+                                // Send filens bytes
+                                try (java.io.FileInputStream fis = new java.io.FileInputStream(target)) {
+                                    byte[] buffer = new byte[8192];
+                                    int read;
+                                    while ((read = fis.read(buffer)) != -1) {
+                                        dos.write(buffer, 0, read);
+                                    }
+                                    dos.flush();
                                 }
-                                dos.flush();
-                            }
 
-                            System.out.println("Færdig med at sende fil.");
+                                System.out.println("Færdig med at sende fil.");
+                            }
                         }
                     } else {
                         dos.writeUTF("ERROR|Unknown command");
