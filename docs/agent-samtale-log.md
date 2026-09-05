@@ -74,4 +74,42 @@ Assistant: Created file conversation.md at project root containing the visible u
 
 ---
 
+User: Hey er jeg logget ind?
+
+Assistant: Ja — du er logget ind i denne session, og jeg kan fortsætte med opgaven her.
+
+User: Ok super:
+Tilføj valideringen af filnavnet tilbage i FileServer, den blev fjernet tidligere.
+Filnavnet skal afvises hvis det indeholder .. eller / eller \, med besked ERROR|Ugyldigt filnavn.
+Dette skal ske i FileServer, ikke kun i FileClient, da serveren skal være den autoritative kontrol.
+Rør ikke ved resten af koden. Forklar bagefter hvad du har ændret.
+
+Assistant: Jeg har lagt valideringen tilbage i FileServer og holdt resten af koden uberørt. Serveren afviser nu filer med .., / eller \, og sender ERROR|Ugyldigt filnavn. Jeg har også kompileret Java-koden for at sikre, at den stadig bygger.
+
+User: Skriv en lille engangs-testklasse TrustedTestClient.java der forbinder til localhost:5000 og sender kommandoen GET|../conversation.md direkte via DataOutputStream, uden nogen filnavnevalidering på klientsiden. Formålet er kun at teste at serverens egen validering fanger path traversal. Læs svaret og print det. Denne klasse skal ikke ind i den endelige aflevering.
+
+Assistant: Created file TrustedTestClient.java for local path-traversal validation testing.
+
+User: ja kør testen
+
+Assistant: Started the server and ran the one-off test client. The server rejected the request and returned ERROR|Ugyldigt filnavn.
+
+User: Opret en fil files/stor-fil-test.txt med omkring 200 KB læsbart tekstindhold, gerne gentaget dansk tekst eller lorem ipsum, kun til at teste filoverførsel af en større fil. Ingen kode, kun selve tekstfilen.
+
+Assistant: Created the large sample file in files/stor-fil-test.txt for larger-file transfer testing.
+
+User: Review FileClient og FileServer. Se efter fejl i TCP-kommunikation, streams, ressourcelukning, sikkerhed og unødvendig kompleksitet. Du må ikke ændre koden. Lav kun forslag og spørgsmål.
+
+Assistant: Provided a review with observations on protocol, stream handling, resource cleanup, security, and complexity, plus questions about whether the design should remain single-client and whether validation should be purely literal or canonical-path based.
+
+User: Udvid filnavnevalideringen i FileServer til også at bruge getCanonicalPath. Efter at have bygget target-filen, hent target.getCanonicalPath() og baseDir.getCanonicalPath(), og bekræft target's kanoniske sti starter med baseDir's kanoniske sti efterfulgt af filseparator. Hvis den ikke gør, send ERROR|Ugyldigt filnavn, samme som det eksisterende tjek. Behold det eksisterende contains-tjek på .., / og \ som første forsvarslinje, dette er et ekstra lag. Rør ikke ved resten af koden. Forklar bagefter hvad du har ændret.
+
+Assistant: Updated FileServer with an additional canonical-path validation layer and compiled successfully.
+
+User: Implementér canonical path-validering i FileServer som beskrevet. Test den bagefter selv, start serveren i baggrunden, kør en testklient der sender GET|../conversation.md direkte uden klientvalidering, og vis mig outputtet.
+
+Assistant: Ran a direct server/client validation test. The server rejected the request with ERROR|Ugyldigt filnavn.
+
+---
+
 End of transcript.
