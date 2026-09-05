@@ -11,7 +11,7 @@ Navne: Nicki, Goncalo, Mattias
 
 Protokollen bruger `DataInputStream`/`DataOutputStream` med `writeUTF`/`readUTF` til beskeder, ikke `BufferedReader`/`PrintWriter`/`Scanner`. Ved succes svarer serveren `OK`, efterfulgt af filstørrelsen (`writeLong`) og selve filens bytes. Ved fejl svarer serveren `ERROR|besked`. Filen læses som bytes på serveren og skrives som bytes på klienten, den sendes aldrig som tekst eller objekt gennem socket'en.
 
-Serveren afgrænser adgang til en tilladt mappe (`files/`) og afviser filnavne der indeholder `..`, `/` eller `\`, for at forhindre path traversal. Klienten har samme validering, men det er serverens tjek der er autoritativt, da en klient i princippet kan bygges om til at omgå sin egen validering.
+Serveren afgrænser adgang til en tilladt mappe (`files/`) og afviser filnavne der indeholder `..`, `/` eller `\`, for at forhindre path traversal, og validerer desuden filens kanoniske sti mod den tilladte mappe som et ekstra lag. Klienten har samme grundvalidering, men det er serverens tjek der er autoritativt, da en klient i princippet kan bygges om til at omgå sin egen validering.
 
 ## AI-agent
 
@@ -27,34 +27,48 @@ Agenten hjalp mest med at implementere hvert trin isoleret, server starter og kl
 
 ### Kritisk vurdering
 
-Et AI-forslag vi fulgte: Filnavnevalideringen i `FileServer`, afvisning af `..`, `/` og `\` før filen slås op, holder sig til planens krav og er enkel at forklare.
+Et forslag vi fulgte: filnavnevalideringen i FileServer. Simpel, gør det den skal, nem at forklare til eksamen.
 
-Et AI-forslag vi ændrede eller afviste: Vi bad agenten tilføje `socket.setSoTimeout(5000)` med håndtering af `SocketTimeoutException`. Efter at have testet det, valgte vi at fjerne det igen.
+Senere bad vi agenten om et rigtigt code review, uden at den måtte ændre noget. Den påpegede at vores `..`-tjek kun fanger de åbenlyse forsøg, ikke fx en fil der reelt ligger uden for `files/` uden at have `..` i navnet. Det gav mening, så vi tilføjede et ekstra lag, canonical path-tjek, oven på det vi allerede havde.
 
-Hvorfor? Opgaven kører single-threaded med én klient ad gangen i et kontrolleret testmiljø, en timeout løste ikke noget krav og tilføjede kompleksitet uden en tilsvarende gevinst. Det er lettere at holde koden enkel og forklarbar til eksamen uden.
+Et forslag vi droppede igen: socket timeout. Vi bad den tilføje det, testede det, og fjernede det bagefter. Gav ikke mening til en opgave der kun kører én klient ad gangen i et kontrolleret setup, bare ekstra kode uden nogen reel gevinst.
+
+Samme review foreslog også at håndtere afbrudte overførsler bedre. Droppede den også, det var ikke noget opgaven krævede, og vi gad ikke bygge noget vi ikke skulle bruge.
 
 ## Test
 
-| Test | Resultat                                                                                                                                             |
-|---|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Normal fil | Bestået, fil overført og gemt korrekt i `downloads/`                                                                                                 |
-| Stor fil | Bestået, testet med `files/stor-fil-test.txt` (680.000 bytes), størrelse bekræftet identisk med kildefilen                                                                                                                       |
-| Ukendt fil | Bestået, `ERROR\|File not found`                                                                                                                     |
-| ../hemmelig.txt | Bestået, testet med `../agent-samtale-log.md` via en midlertidig testklient udenom klientens eget filter, serveren svarede `ERROR\|Ugyldigt filnavn` |
-| Server ikke startet | Bestået, `Connection refused: connect`                                                                                                               |
+| Test | Resultat |
+|---|---|
+| Normal fil | Bestået, fil overført og gemt korrekt i `downloads/` |
+| Stor fil | Bestået, testet med `files/stor-fil-test.txt` (680.000 bytes), størrelse bekræftet identisk med kildefilen |
+| Ukendt fil | Bestået, `ERROR\|File not found` |
+| ../hemmelig.txt | Bestået, testet med path traversal-forsøg direkte mod serveren udenom klientens filter, fx `../conversation.md`, både `contains`-tjekket og den senere tilføjede canonical path-validering afviser korrekt med `ERROR\|Ugyldigt filnavn` |
+| Server ikke startet | Bestået, `Connection refused: connect` |
 
 ## Peer review
 
 Vigtigste feedback fra den anden gruppe:
 
+[udfyld når vi har fået den]
+
 Hvad ændrede vi efter reviewet?
 
-Hvad valgte vi eventuelt ikke at ændre, og hvorfor?
+[udfyld]
+
+Hvad valgte vi ikke at ændre, og hvorfor?
+
+[udfyld]
 
 ## Refleksion
 
 1. Hvor var AI mest nyttig?
 
-2. Hvornår skulle I være kritiske over for AI?
+Til selve implementeringen, den skrev det meste af boilerplate-koden, GET/OK/ERROR-flowet, streams osv, mens vi kunne fokusere på at forstå og teste det trin for trin i stedet for at skrive det hele selv.
 
-3. Hvordan kontrollerede I, at AI-genereret kode faktisk virkede?
+2. Hvornår skulle vi være kritiske over for AI?
+
+Da den fjernede path traversal-tjekket bare fordi vi bad om det uden at tænke over at det brød et krav. Vi opdagede det senere og skulle have den sat tilbage. God påmindelse om at den bare gør hvad man beder om, uden at den nødvendigvis tænker på om det stadig opfylder kravene.
+
+3. Hvordan kontrollerede vi at koden faktisk virkede?
+
+Kørte alle testene manuelt selv, server og klient i hver sin proces, tjekkede output linje for linje. Til path traversal skrev vi en lille testklient der gik direkte mod serveren, fordi klientens eget filter ellers gjorde at vi aldrig testede serverens egen validering.
