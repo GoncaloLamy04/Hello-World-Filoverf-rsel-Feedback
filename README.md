@@ -23,9 +23,12 @@ Vi ændrede det til `writeUTF`/`readUTF`/`writeLong` med `DataInputStream`/`Data
 
 ### Implementering
 
-Agenten hjalp mest med at implementere hvert trin isoleret, server starter og klient forbinder, `GET`-kommandoen, `OK`/`ERROR`-håndtering, selve byte-overførslen, og med at forklare ændringerne bagefter så vi kunne følge med i koden løbende i stedet for at få det hele på én gang.
+Agenten hjalp mest med at implementere hvert trin isoleret, server starter og klient forbinder, GET-kommandoen, OK/ERROR-håndtering, selve byte-overførslen, og med at forklare ændringerne bagefter så vi kunne følge med i koden løbende i stedet for at få det hele på én gang.
+
+Efter det formelle review bad vi den også dele main() i FileServer op i mindre metoder, handleRequest og resolveValidatedFile, for bedre struktur uden at ændre logikken. Vi opdagede at den første version duplikerede filbygningen, så vi bad den rette det til at bygge filen ét sted i stedet for to.
 
 ### Kritisk vurdering
+
 
 Et forslag vi fulgte: filnavnevalideringen i FileServer. Simpel, gør det den skal, nem at forklare til eksamen.
 
