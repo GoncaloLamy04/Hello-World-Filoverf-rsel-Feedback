@@ -35,6 +35,14 @@ Hvorfor?
 
 ## Test 
 
+Kør alle JUnit-tests fra projektets rodmappe med:
+
+```powershell
+.\run-tests.ps1
+```
+
+Scriptet henter JUnit-runneren én gang til `tools`-mappen, kompilerer koden og testene og kører derefter alle tests.
+
  
 
 | Test | Resultat | 

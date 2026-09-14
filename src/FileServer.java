@@ -16,10 +16,12 @@ public class FileServer {
     private static void startServer(int port) {
         try (ServerSocket server = new ServerSocket(port)) {
             System.out.println("Venter på klient...");
-            try (Socket client = server.accept()) {
-                System.out.println("Klient forbundet fra " + client.getRemoteSocketAddress());
-                handleServerConnection(client);
-                System.out.println("Lukker forbindelse og stopper serveren.");
+            while (true) {
+                try (Socket client = server.accept()) {
+                    System.out.println("Klient forbundet fra " + client.getRemoteSocketAddress());
+                    handleServerConnection(client);
+                    System.out.println("Lukker klientforbindelse.");
+                }
             }
         } catch (IOException e) {
             System.err.println("Fejl i server: " + e.getMessage());
