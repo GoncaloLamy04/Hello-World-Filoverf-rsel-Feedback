@@ -23,6 +23,20 @@ class CommandParserTest {
     }
 
     @Test
+    void parse_lowercaseGetCommand_returnsCommandRequest() {
+        // Arrange
+        String command = "get|messi.txt";
+
+        // Act
+        CommandParser.CommandRequest result = CommandParser.parse(command);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("get|messi.txt", result.getRawCommand());
+        assertEquals("messi.txt", result.getFilename());
+    }
+
+    @Test
     void parse_null_returnsNull() {
         // Arrange
         String command = null;

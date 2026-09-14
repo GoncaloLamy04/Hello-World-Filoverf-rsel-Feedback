@@ -8,7 +8,7 @@ public class CommandParser {
         }
 
         String trimmedCommand = command.trim();
-        if (!trimmedCommand.startsWith(GET_PREFIX)) {
+        if (!trimmedCommand.regionMatches(true, 0, GET_PREFIX, 0, GET_PREFIX.length())) {
             System.err.println("Ugyldig kommando: brug formatet GET|filnavn.");
             return null;
         }

@@ -14,6 +14,10 @@ public class FileClient {
     private static final int BUFFER_SIZE = 8192;
 
     public static void main(String[] args) {
+        runClient();
+    }
+
+    private static void runClient() {
         BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
 
         String command = readCommand(consoleReader);
@@ -58,22 +62,7 @@ public class FileClient {
                 try {
                     String response = dis.readUTF();
                     System.out.println("Modtaget svar fra server: " + response);
-
-                    if (response.startsWith("OK")) {
-                       long size = dis.readLong();
-                       System.out.println("Server sender fil på " + size + " bytes. Gemmer lokalt...");
-
-                       long remaining = downloadFile(dis, outFile, size);
-                       if (remaining == 0) {
-                           System.out.println("Filen blev modtaget korrekt: " + outFile.getPath());
-                       } else {
-                           System.err.println("Fejl ved filmodtagelse: forventede " + size + " bytes, men modtog " + (size - remaining) + " bytes.");
-                       }
-                    } else if (response.startsWith("ERROR")) {
-                       System.err.println("Server fejl: " + response);
-                    } else {
-                       System.err.println("Uventet svar fra server: " + response);
-                    }
+                    handleResponse(dis, outFile, response);
                 } catch (java.io.EOFException eof) {
                     System.err.println("Forbindelsen blev afbrudt af serveren.");
                 }
@@ -83,6 +72,40 @@ public class FileClient {
         } catch (IOException e) {
             System.err.println("Kunne ikke forbinde til server: " + e.getMessage());
         }
+    }
+
+    private static void handleResponse(DataInputStream dis, java.io.File outFile, String response) throws IOException {
+        if (response.startsWith("OK")) {
+            handleOkResponse(dis, outFile);
+            return;
+        }
+
+        if (response.startsWith("ERROR")) {
+            handleErrorResponse(response);
+            return;
+        }
+
+        handleUnexpectedResponse(response);
+    }
+
+    private static void handleOkResponse(DataInputStream dis, java.io.File outFile) throws IOException {
+        long size = dis.readLong();
+        System.out.println("Server sender fil på " + size + " bytes. Gemmer lokalt...");
+
+        long remaining = downloadFile(dis, outFile, size);
+        if (remaining == 0) {
+            System.out.println("Filen blev modtaget korrekt: " + outFile.getPath());
+        } else {
+            System.err.println("Fejl ved filmodtagelse: forventede " + size + " bytes, men modtog " + (size - remaining) + " bytes.");
+        }
+    }
+
+    private static void handleErrorResponse(String response) {
+        System.err.println("Server fejl: " + response);
+    }
+
+    private static void handleUnexpectedResponse(String response) {
+        System.err.println("Uventet svar fra server: " + response);
     }
 
     private static String readCommand(BufferedReader consoleReader) {

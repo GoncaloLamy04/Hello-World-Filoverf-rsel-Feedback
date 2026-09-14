@@ -13,6 +13,10 @@ public class FileServer {
     private static final int BUFFER_SIZE = 8192;
 
     public static void main(String[] args) {
+        startServer();
+    }
+
+    private static void startServer() {
         System.out.println("Starter FileServer på port " + PORT);
 
         try (ServerSocket server = new ServerSocket(PORT)) {
@@ -42,36 +46,38 @@ public class FileServer {
         String command = dis.readUTF();
         System.out.println("Modtog kommando fra klient: " + command);
 
-        // Enkel validering: skal starte med GET|
         if (command != null && command.startsWith(GET_PREFIX)) {
-            String filename = command.substring(GET_PREFIX.length());
-            java.io.File target = resolveValidatedFile(filename);
-            if (target == null) {
-                sendError(dos, "ERROR|Ugyldigt filnavn");
-                System.out.println("Sendte svar: ERROR|Ugyldigt filnavn");
-            } else if (!target.exists() || !target.isFile()) {
-                sendError(dos, "ERROR|File not found");
-                System.out.println("Sendte svar: ERROR|File not found (" + target.getPath() + ")");
-            } else {
-                long fileSize = target.length();
-                dos.writeUTF("OK");
-                dos.writeLong(fileSize);
-                System.out.println("Sender fil (" + target.getPath() + ") størrelse " + fileSize + " bytes");
-
-                sendFile(dos, target);
-                System.out.println("Færdig med at sende fil.");
-            }
+            handleGetCommand(dos, command);
         } else {
-            sendError(dos, "ERROR|Unknown command");
-            System.out.println("Sendte svar: ERROR|Unknown command");
+            handleUnknownCommand(dos);
         }
     }
 
-    private static void sendError(DataOutputStream dos, String message) throws IOException {
-        dos.writeUTF(message);
+    private static void handleGetCommand(DataOutputStream dos, String command) throws IOException {
+        String filename = command.substring(GET_PREFIX.length());
+        java.io.File target = resolveValidatedFile(filename);
+
+        if (target == null) {
+            dos.writeUTF("ERROR|Ugyldigt filnavn");
+            System.out.println("Sendte svar: ERROR|Ugyldigt filnavn");
+            return;
+        }
+
+        if (!target.exists() || !target.isFile()) {
+            dos.writeUTF("ERROR|File not found");
+            System.out.println("Sendte svar: ERROR|File not found (" + target.getPath() + ")");
+            return;
+        }
+
+        sendFileResponse(dos, target);
     }
 
-    private static void sendFile(DataOutputStream dos, java.io.File target) throws IOException {
+    private static void sendFileResponse(DataOutputStream dos, java.io.File target) throws IOException {
+        long fileSize = target.length();
+        dos.writeUTF("OK");
+        dos.writeLong(fileSize);
+        System.out.println("Sender fil (" + target.getPath() + ") størrelse " + fileSize + " bytes");
+
         try (java.io.FileInputStream fis = new java.io.FileInputStream(target)) {
             byte[] buffer = new byte[BUFFER_SIZE];
             int read;
@@ -80,6 +86,13 @@ public class FileServer {
             }
             dos.flush();
         }
+
+        System.out.println("Færdig med at sende fil.");
+    }
+
+    private static void handleUnknownCommand(DataOutputStream dos) throws IOException {
+        dos.writeUTF("ERROR|Unknown command");
+        System.out.println("Sendte svar: ERROR|Unknown command");
     }
 
     private static java.io.File resolveValidatedFile(String filename) {
