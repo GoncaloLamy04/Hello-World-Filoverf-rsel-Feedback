@@ -12,20 +12,21 @@ public class FileServer {
         System.out.println("Starter FileServer på port " + port);
 
         try (ServerSocket server = new ServerSocket(port)) {
-            System.out.println("Venter på klient...");
-            // Accepter én klient og luk
-            try (Socket client = server.accept()) {
-                System.out.println("Klient forbundet fra " + client.getRemoteSocketAddress());
-                // Læs en kommando fra klienten (fx: GET|filnavn) og svar tilbage
-                try (DataInputStream dis = new DataInputStream(client.getInputStream());
-                     DataOutputStream dos = new DataOutputStream(client.getOutputStream())) {
-                    handleRequest(dis, dos);
-                } catch (java.io.EOFException eof) {
-                    System.err.println("Forbindelsen blev afbrudt af klienten.");
-                } catch (IOException e) {
-                    System.err.println("Fejl ved kommunikation med klient: " + e.getMessage());
+            while (true) {
+                System.out.println("Venter på klient...");
+                try (Socket client = server.accept()) {
+                    System.out.println("Klient forbundet fra " + client.getRemoteSocketAddress());
+                    // Læs en kommando fra klienten (fx: GET|filnavn) og svar tilbage
+                    try (DataInputStream dis = new DataInputStream(client.getInputStream());
+                         DataOutputStream dos = new DataOutputStream(client.getOutputStream())) {
+                        handleRequest(dis, dos);
+                    } catch (java.io.EOFException eof) {
+                        System.err.println("Forbindelsen blev afbrudt af klienten.");
+                    } catch (IOException e) {
+                        System.err.println("Fejl ved kommunikation med klient: " + e.getMessage());
+                    }
+                    System.out.println("Lukker forbindelse og venter på næste klient.");
                 }
-                System.out.println("Lukker forbindelse og stopper serveren.");
             }
         } catch (IOException e) {
             System.err.println("Fejl i server: " + e.getMessage());
