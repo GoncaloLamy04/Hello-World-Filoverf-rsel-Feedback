@@ -11,6 +11,7 @@ public class FileClient {
     public static void main(String[] args) {
         String host = "localhost";
         int port = 5000;
+        BufferedReader consoleReader = new BufferedReader(new InputStreamReader(System.in));
 
         // Læs kommando fra bruger (fx: GET|filnavn)
         String command = null;
@@ -19,8 +20,8 @@ public class FileClient {
             command = console.readLine("Skriv kommando (fx GET|filnavn): ");
         } else {
             System.out.print("Skriv kommando (fx GET|filnavn): ");
-            try (BufferedReader consoleIn = new BufferedReader(new InputStreamReader(System.in))) {
-                command = consoleIn.readLine();
+            try {
+                command = consoleReader.readLine();
             } catch (IOException e) {
                 System.err.println("Fejl ved læsning fra konsol: " + e.getMessage());
                 return;
@@ -43,6 +44,24 @@ public class FileClient {
             return;
         }
 
+        java.io.File outDir = new java.io.File("downloads");
+        if (!outDir.exists()) outDir.mkdirs();
+        java.io.File outFile = new java.io.File(outDir, requestedFilename);
+
+        if (outFile.exists()) {
+            System.out.print("Filen findes allerede. Overskriv? (j/n): ");
+            try {
+                String answer = consoleReader.readLine();
+                if (answer == null || !answer.equalsIgnoreCase("j")) {
+                   System.out.println("Filoverskrivning afbrudt.");
+                   return;
+                }
+            } catch (IOException e) {
+                System.err.println("Fejl ved læsning af svar: " + e.getMessage());
+                return;
+            }
+        }
+
         System.out.println("Starter FileClient, forsøger at forbinde til " + host + ":" + port);
 
         try (Socket socket = new Socket(host, port)) {
@@ -63,13 +82,9 @@ public class FileClient {
                        long size = dis.readLong();
                        System.out.println("Server sender fil på " + size + " bytes. Gemmer lokalt...");
 
-                       java.io.File outDir = new java.io.File("downloads");
-                       if (!outDir.exists()) outDir.mkdirs();
-                       java.io.File outFile = new java.io.File(outDir, requestedFilename);
-
-                       try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outFile)) {
+                       long remaining = size;
+                       try (java.io.FileOutputStream fos = new java.io.FileOutputStream(outFile, false)) {
                            byte[] buffer = new byte[8192];
-                           long remaining = size;
                            while (remaining > 0) {
                                int toRead = (int) Math.min(buffer.length, remaining);
                                int read = dis.read(buffer, 0, toRead);
@@ -80,7 +95,11 @@ public class FileClient {
                            fos.flush();
                        }
 
-                       System.out.println("Færdig med at modtage fil. Gemt som: " + outFile.getPath());
+                       if (remaining == 0) {
+                           System.out.println("Filen blev modtaget korrekt: " + outFile.getPath());
+                       } else {
+                           System.err.println("Fejl ved filmodtagelse: forventede " + size + " bytes, men modtog " + (size - remaining) + " bytes.");
+                       }
                    } else if (response.startsWith("ERROR")) {
                        System.err.println("Server fejl: " + response);
                    } else {
