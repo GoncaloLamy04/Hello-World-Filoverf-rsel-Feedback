@@ -1,4 +1,6 @@
 public class CommandParser {
+    private static final String GET_PREFIX = "GET|";
+
     public static CommandRequest parse(String command) {
         if (command == null) {
             System.err.println("Ugyldig kommando: kommandoen er tom.");
@@ -6,12 +8,12 @@ public class CommandParser {
         }
 
         String trimmedCommand = command.trim();
-        if (!trimmedCommand.startsWith("GET|")) {
+        if (!trimmedCommand.startsWith(GET_PREFIX)) {
             System.err.println("Ugyldig kommando: brug formatet GET|filnavn.");
             return null;
         }
 
-        String filename = trimmedCommand.substring("GET|".length());
+        String filename = trimmedCommand.substring(GET_PREFIX.length());
         if (filename.isEmpty()) {
             System.err.println("Ugyldig kommando: filnavn mangler.");
             return null;
